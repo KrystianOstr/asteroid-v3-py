@@ -23,7 +23,8 @@ ship_rect = ship_surf.get_rect(midtop = (WINDOW_WIDTH//2,WINDOW_HEIGHT- 80))
 
 
 laser_surf = py.image.load('assets/graphics/laser.png').convert_alpha()
-laser_rect = laser_surf.get_rect(midbottom = (ship_rect.midtop))
+laser_list = []
+
 
 #background
 background_surf = py.image.load('assets/graphics/background.png').convert_alpha()
@@ -43,8 +44,10 @@ while True:
             if event.key == py.K_ESCAPE:
                 py.quit()
                 sys.exit()
-        # if event.type == py.MOUSEBUTTONDOWN:
-        #     if event.button == 1:
+        if event.type == py.MOUSEBUTTONDOWN:
+            laser_rect = laser_surf.get_rect(midbottom = (ship_rect.midtop))
+            laser_list.append(laser_rect)
+
                 
 
 
@@ -53,7 +56,6 @@ while True:
 
     ship_rect.center = py.mouse.get_pos()
 
-    laser_rect.y -= round(200 * dt)
 
     display_surface.fill((200,200,200))
     display_surface.blit(background_surf,(0,0)) 
@@ -61,7 +63,11 @@ while True:
     display_surface.blit(text_surf, text_rect)
     py.draw.rect(display_surface, (255,255,255), text_rect.inflate(30,30), width=8, border_radius= 5)
     
-    display_surface.blit(laser_surf, laser_rect)
+    for laser in laser_list:
+        display_surface.blit(laser_surf, laser)
+        laser.y -= round(200 * dt)
+
+
     display_surface.blit(ship_surf, ship_rect)
   
 
