@@ -1,3 +1,4 @@
+from random import randint, uniform
 import pygame as py
 import sys
 
@@ -7,6 +8,15 @@ def laser_update(laser_list, speed=300):
         rect.y -= round(speed * dt)
         if rect.bottom < 0:
             laser_list.remove(rect)
+
+
+def meteor_update(meteor_list, speed=300):
+    for meteor_tuple in meteor_list:
+        direction = meteor_tuple[1]
+        meteor_rect = meteor_tuple[0]
+        meteor_rect.center += direction * speed * dt
+        if meteor_rect.top > WINDOW_HEIGHT:
+            meteor_list.remove(meteor_tuple)
 
 
 def display_score():
@@ -55,6 +65,10 @@ ship_rect = ship_surf.get_rect(midtop=(WINDOW_WIDTH // 2, WINDOW_HEIGHT - 80))
 laser_surf = py.image.load("assets/graphics/laser.png").convert_alpha()
 laser_list = []
 
+# meteor
+meteor_surf = py.image.load("assets/graphics/meteor.png").convert_alpha()
+meteor_list = []
+
 # laser timer
 can_shoot = True
 shoot_time = None
@@ -62,6 +76,12 @@ shoot_time = None
 # meteor timer
 meteor_timer = py.event.custom_type()
 py.time.set_timer(meteor_timer, 500)
+
+# import sound
+laser_sound = py.mixer.Sound("assets/sounds/laser.ogg")
+explosion_sound = py.mixer.Sound("assets/sounds/explosion.wav")
+background_music = py.mixer.Sound("assets/sounds/music.wav")
+background_music.play(-1)
 
 while True:
 
@@ -76,11 +96,22 @@ while True:
         if event.type == py.MOUSEBUTTONDOWN and can_shoot:
             laser_rect = laser_surf.get_rect(midbottom=(ship_rect.midtop))
             laser_list.append(laser_rect)
+            laser_sound.play()
 
             can_shoot = False
             shoot_time = py.time.get_ticks()
         if event.type == meteor_timer:
-            pass
+
+            # random pos
+            x_pos = randint(-100, WINDOW_WIDTH + 100)
+            y_pos = randint(-100, -50)
+
+            meteor_rect = meteor_surf.get_rect(midbottom=(x_pos, y_pos))
+
+            # random direction
+            direction = py.math.Vector2(uniform(-0.5, 0.5), 1)
+
+            meteor_list.append((meteor_rect, direction))
 
     # FPS
     dt = clock.tick(60) / 1000
@@ -90,6 +121,24 @@ while True:
     laser_update(laser_list)
     can_shoot = laser_timer(can_shoot, 400)
 
+    # meteor ship collision
+    for meteor_tuple in meteor_list:
+        meteor_rect = meteor_tuple[0]
+        if ship_rect.colliderect(meteor_rect):
+            py.quit()
+            sys.exit()
+
+    # laser meteor collision
+    for laser_rect in laser_list:
+        for meteor_tuple in meteor_list:
+            meteor_rect = meteor_tuple[0]
+            if laser_rect.colliderect(meteor_rect):
+                laser_list.remove(laser_rect)
+                meteor_list.remove(meteor_tuple)
+                explosion_sound.play()
+
+    meteor_update(meteor_list)
+
     display_surface.fill((200, 200, 200))
     display_surface.blit(background_surf, (0, 0))
 
@@ -97,6 +146,9 @@ while True:
 
     for laser in laser_list:
         display_surface.blit(laser_surf, laser)
+
+    for meteor_tuple in meteor_list:
+        display_surface.blit(meteor_surf, meteor_tuple[0])
 
     display_surface.blit(ship_surf, ship_rect)
 
