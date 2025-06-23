@@ -80,10 +80,14 @@ py.time.set_timer(meteor_timer, 500)
 # import sound
 laser_sound = py.mixer.Sound("assets/sounds/laser.ogg")
 explosion_sound = py.mixer.Sound("assets/sounds/explosion.wav")
+ship_explosion_sound = py.mixer.Sound("assets/sounds/explosion.mp3")
 background_music = py.mixer.Sound("assets/sounds/music.wav")
 background_music.play(-1)
 
-while True:
+running = True
+game_over = False
+
+while running:
 
     for event in py.event.get():
         if event.type == py.QUIT:
@@ -124,9 +128,11 @@ while True:
     # meteor ship collision
     for meteor_tuple in meteor_list:
         meteor_rect = meteor_tuple[0]
-        if ship_rect.colliderect(meteor_rect):
-            py.quit()
-            sys.exit()
+        if ship_rect.colliderect(meteor_rect) and not game_over:
+            ship_explosion_sound.play()
+            game_over = True
+            # py.quit()
+            # sys.exit()
 
     # laser meteor collision
     for laser_rect in laser_list:
@@ -151,5 +157,16 @@ while True:
         display_surface.blit(meteor_surf, meteor_tuple[0])
 
     display_surface.blit(ship_surf, ship_rect)
+
+    if game_over == True:
+        background_music.stop()
+        display_surface.fill("Teal")
+        game_over_text = font.render(
+            f"Game over, press ESC to exit", True, (255, 255, 255)
+        )
+        game_over_text_rect = game_over_text.get_rect(
+            center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
+        )
+        display_surface.blit(game_over_text, game_over_text_rect)
 
     py.display.update()
